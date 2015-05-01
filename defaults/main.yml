@@ -1,2 +1,4 @@
 ---
 # defaults file for mapr_post_install_test
+
+skip_tests: False
