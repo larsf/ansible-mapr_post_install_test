@@ -1,6 +1,11 @@
 ---
 # tasks file for mapr_post_install_test
 
+    - name: clean up the teragen
+      run_once: yes
+      command: hadoop fs -rm -r /user/teragen
+      when: classic_enabled
+
     - name: try to submit a small job (teragen - MRv1)
       run_once: yes
       environment:
@@ -43,6 +48,11 @@
       run_once: yes
       stat: path=/opt/mapr/roles/resourcemanager
       register: resourcemanager
+      when: yarn_enabled
+
+    - name: clean up the teragen
+      run_once: yes
+      command: hadoop fs -rm -r /user/teragen
       when: yarn_enabled
 
     - name: try to submit a small job (teragen - MRv2)
@@ -111,15 +121,15 @@
       run_once: yes
       command: hive -e 'show tables'
       changed_when: False
-      when: inventory_hostname in groups["edge"]
+      when: inventory_hostname in groups["edge"] or inventory_hostname in groups["hiveserver"]
 
     - name: load some data into hive and select
       run_once: yes
       command: hive -e "CREATE TABLE IF NOT EXISTS pokes (foo INT, bar STRING); LOAD DATA LOCAL INPATH '/opt/mapr/hive/hive-0.13/examples/files/kv1.txt' OVERWRITE INTO TABLE pokes; SELECT * FROM pokes;"
       changed_when: False
-      when: inventory_hostname in groups["edge"]
+      when: inventory_hostname in groups["edge"] or inventory_hostname in groups["hiveserver"]
 
     - name: drop pokes table
       run_once: yes
       command: hive -e 'DROP TABLE pokes;'
-      when: inventory_hostname in groups["edge"]
+      when: inventory_hostname in groups["edge"] or inventory_hostname in groups["hiveserver"]
