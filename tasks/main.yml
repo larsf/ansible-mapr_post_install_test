@@ -57,6 +57,7 @@
 
     - name: try to submit a small job (teragen - MRv2)
       run_once: yes
+      sudo_user: mapr
       environment:
         MAPR_MAPREDUCE_MODE: yarn
       command: hadoop jar /opt/mapr/hadoop/hadoop-0.20.2/hadoop-0.20.2-dev-examples.jar teragen 100 /user/teragen
@@ -65,11 +66,13 @@
  
     - name: clean up the teragen
       run_once: yes
+      sudo_user: mapr
       command: hadoop fs -rm -f -r /user/teragen
       when: yarn_enabled
 
     - name: run TestDFSIO to write,read 15GB of data per node (MRv2)
       run_once: yes
+      sudo_user: mapr
       environment:
         MAPR_MAPREDUCE_MODE: yarn
       command: hadoop jar /opt/mapr/hadoop/hadoop-0.20.2/hadoop-0.20.2-dev-test.jar TestDFSIO -{{item}} -fileSize 1024 -nrFiles {{groups['cluster']|length * 15}} -resFile /tmp/mrv2-result-{{item}}
@@ -87,6 +90,7 @@
       when: yarn_enabled is defined and yarn_enabled
 
     - name: clean up TestDFSIO data
+      sudo_user: mapr
       run_once: yes
       environment:
         MAPR_MAPREDUCE_MODE: yarn
@@ -107,29 +111,34 @@
 
     - name: try to submit a small job (default MR framework)
       run_once: yes
+      sudo_user: mapr
       command: hadoop jar /opt/mapr/hadoop/hadoop-0.20.2/hadoop-0.20.2-dev-examples.jar teragen 100 /user/teragen
       register: teragen
       when: classic_enabled is defined or yarn_enabled is defined and inventory_hostname in groups["edge"]
 
     - name: clean up the teragen
       run_once: yes
+      sudo_user: mapr
       command: hadoop fs -rm -f -r /user/teragen
       when: teragen.rc == 0
       when: classic_enabled or yarn_enabled and inventory_hostname in groups["edge"]
 
     - name: run a minimal hive command
       run_once: yes
+      sudo_user: mapr
       command: hive -e 'show tables'
       changed_when: False
       when: inventory_hostname in groups["edge"] or inventory_hostname in groups["hiveserver"]
 
     - name: load some data into hive and select
       run_once: yes
+      sudo_user: mapr
       command: hive -e "CREATE TABLE IF NOT EXISTS pokes (foo INT, bar STRING); LOAD DATA LOCAL INPATH '/opt/mapr/hive/hive-0.13/examples/files/kv1.txt' OVERWRITE INTO TABLE pokes; SELECT * FROM pokes;"
       changed_when: False
       when: inventory_hostname in groups["edge"] or inventory_hostname in groups["hiveserver"]
 
     - name: drop pokes table
       run_once: yes
+      sudo_user: mapr
       command: hive -e 'DROP TABLE pokes;'
       when: inventory_hostname in groups["edge"] or inventory_hostname in groups["hiveserver"]
