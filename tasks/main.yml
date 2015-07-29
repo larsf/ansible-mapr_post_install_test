@@ -52,6 +52,7 @@
 
     - name: clean up the teragen
       run_once: yes
+      sudo_user: mapr
       command: hadoop fs -rm -f -r /user/teragen
       when: yarn_enabled
 
