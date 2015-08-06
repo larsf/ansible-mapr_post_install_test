@@ -71,6 +71,11 @@
       command: hadoop fs -rm -f -r /user/teragen
       when: yarn_enabled
 
+    - name: get ec2 facts
+      ec2_facts:
+      register: ec2_facts
+      when: ansible_distribution in ('Amazon')
+
     - name: run TestDFSIO to write,read 15GB of data per node (MRv2)
       run_once: yes
       sudo_user: mapr
@@ -134,7 +139,7 @@
     - name: load some data into hive and select
       run_once: yes
       sudo_user: mapr
-      command: hive -e "CREATE TABLE IF NOT EXISTS pokes (foo INT, bar STRING); LOAD DATA LOCAL INPATH '/opt/mapr/hive/hive-0.13/examples/files/kv1.txt' OVERWRITE INTO TABLE pokes; SELECT * FROM pokes;"
+      command: hive -e "CREATE TABLE IF NOT EXISTS pokes (foo INT, bar STRING); LOAD DATA LOCAL INPATH '/opt/mapr/hive/hive-1.0/examples/files/kv1.txt' OVERWRITE INTO TABLE pokes; SELECT * FROM pokes;"
       changed_when: False
       when: inventory_hostname in groups["edge"] or inventory_hostname in groups["hiveserver"]
 
