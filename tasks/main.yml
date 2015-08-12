@@ -128,23 +128,3 @@
       command: hadoop fs -rm -f -r /user/teragen
       when: teragen.rc == 0
       when: classic_enabled or yarn_enabled and inventory_hostname in groups["edge"]
-
-    - name: run a minimal hive command
-      run_once: yes
-      sudo_user: mapr
-      command: hive -e 'show tables'
-      changed_when: False
-      when: inventory_hostname in groups["edge"] or inventory_hostname in groups["hiveserver"]
-
-    - name: load some data into hive and select
-      run_once: yes
-      sudo_user: mapr
-      command: hive -e "CREATE TABLE IF NOT EXISTS pokes (foo INT, bar STRING); LOAD DATA LOCAL INPATH '/opt/mapr/hive/hive-1.0/examples/files/kv1.txt' OVERWRITE INTO TABLE pokes; SELECT * FROM pokes;"
-      changed_when: False
-      when: inventory_hostname in groups["edge"] or inventory_hostname in groups["hiveserver"]
-
-    - name: drop pokes table
-      run_once: yes
-      sudo_user: mapr
-      command: hive -e 'DROP TABLE pokes;'
-      when: inventory_hostname in groups["edge"] or inventory_hostname in groups["hiveserver"]
