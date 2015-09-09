@@ -19,11 +19,11 @@
       command: hadoop fs -rm -f -r /user/teragen
       when: classic_enabled
 
-    - name: run TestDFSIO to write,read 15GB of data per node (MRv1)
+    - name: run TestDFSIO to write,read 5GB of data per node (MRv1)
       run_once: yes
       environment:
         MAPR_MAPREDUCE_MODE: classic
-      command: hadoop jar /opt/mapr/hadoop/hadoop-0.20.2/hadoop-0.20.2-dev-test.jar TestDFSIO -{{item}} -fileSize 1024 -nrFiles {{groups['cluster']|length * 15}} -resFile /tmp/mrv1-result-{{item}}
+      command: hadoop jar /opt/mapr/hadoop/hadoop-0.20.2/hadoop-0.20.2-dev-test.jar TestDFSIO -{{item}} -fileSize 1024 -nrFiles {{groups['cluster']|length * 5}} -resFile /tmp/mrv1-result-{{item}}
       with_items:
         - write
         - read
@@ -76,12 +76,12 @@
       register: ec2_facts
       when: ansible_distribution in ('Amazon')
 
-    - name: run TestDFSIO to write,read 15GB of data per node (MRv2)
+    - name: run TestDFSIO to write,read 5GB of data per node (MRv2)
       run_once: yes
       sudo_user: mapr
       environment:
         MAPR_MAPREDUCE_MODE: yarn
-      command: hadoop jar /opt/mapr/hadoop/hadoop-0.20.2/hadoop-0.20.2-dev-test.jar TestDFSIO -{{item}} -fileSize 1024 -nrFiles {{groups['cluster']|length * 15}} -resFile /tmp/mrv2-result-{{item}}
+      command: hadoop jar /opt/mapr/hadoop/hadoop-0.20.2/hadoop-0.20.2-dev-test.jar TestDFSIO -{{item}} -fileSize 1024 -nrFiles {{groups['cluster']|length * 5}} -resFile /tmp/mrv2-result-{{item}}
       with_items:
         - write
         - read
