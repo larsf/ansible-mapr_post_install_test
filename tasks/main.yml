@@ -120,7 +120,7 @@
       sudo_user: mapr
       command: hadoop jar /opt/mapr/hadoop/hadoop-0.20.2/hadoop-0.20.2-dev-examples.jar teragen 100 /user/teragen
       register: teragen
-      when: classic_enabled is defined or yarn_enabled is defined and inventory_hostname in groups["edge"]
+      when: (classic_enabled or yarn_enabled) and inventory_hostname in groups["edge"]
 
     - name: clean up the teragen
       run_once: yes
