@@ -1,6 +1,5 @@
 ---
 # tasks file for mapr_post_install_test
-
     - name: clean up the teragen
       run_once: yes
       command: hadoop fs -rm -f -r /user/teragen
@@ -29,9 +28,12 @@
         - read
       when: classic_enabled
 
-    - name: get the results files
+    - name: get the results files (mrv1)
       run_once: yes
-      fetch: src=/tmp/mrv1-result-{{item}} dest=test_results fail_on_missing=true
+      fetch:
+        src: /tmp/mrv1-result-{{item}}
+        dest: 'test_results/{{ansible_distribution}}/{{ansible_ec2_placement_region|default("region_unknown")}}/{{ansible_ec2_instance_type|default("type_unknown")}}/{{ansible_date_time.year}}/{{ansible_date_time.month}}/{{ansible_date_time.day}}/{{ansible_date_time.hour}}/{{ansible_date_time.minute}}'
+        fail_on_missing: true
       with_items:
         - read
         - write
@@ -87,11 +89,11 @@
         - read
       when: yarn_enabled
 
-    - name: get the results files
+    - name: get the results files (YARN)
       run_once: yes
       fetch:
         src: /tmp/mrv2-result-{{item}}
-        dest: test_results/{{ansible_distribution}}/{{ansible_ec2_placement_region|default("region_unknown")}}/{{ansible_ec2_instance_type|default("type_unknown")}}/{{ansible_date_time.year}}/{{ansible_date_time.month}}/{{ansible_date_time.day}}/{{ansible_date_time.hour}}/{{ansible_date_time.minute}}
+        dest: 'test_results/{{ansible_distribution}}/{{ansible_ec2_placement_region|default("region_unknown")}}/{{ansible_ec2_instance_type|default("type_unknown")}}/{{ansible_date_time.year}}/{{ansible_date_time.month}}/{{ansible_date_time.day}}/{{ansible_date_time.hour}}/{{ansible_date_time.minute}}'
         fail_on_missing: true
       with_items:
         - read
