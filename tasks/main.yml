@@ -18,35 +18,32 @@
       command: hadoop fs -rm -f -r /user/teragen
       when: classic_enabled
 
-    - name: run TestDFSIO to write,read 5GB of data per node (MRv1)
+    - name: check whether /benchmarks is a volume
+      sudo_user: mapr
       run_once: yes
-      environment:
-        MAPR_MAPREDUCE_MODE: classic
-      command: hadoop jar /opt/mapr/hadoop/hadoop-0.20.2/hadoop-0.20.2-dev-test.jar TestDFSIO -{{item}} -fileSize 1024 -nrFiles {{groups['cluster']|length * 5}} -resFile /tmp/mrv1-result-{{item}}
+      shell: hadoop mfs -lsd /benchmarks | egrep /benchmarks | egrep "^v"
+      register: benchmarks_dir
+      changed_when: false
+      failed_when: benchmarks_dir.rc not in (0,1)
+
+    - name: delete benchmarks directory
+      run_once: yes
+      sudo_user: mapr
+      command: hadoop fs -rm -f -r /benchmarks
+      when: benchmarks_dir.stdout|length == 0
+
+    - name: create benchmarks volume
+      run_once: yes
+      mapr_volume: name=benchmarks path=/benchmarks replication=1 minreplication=1 state=present username={{mapr_admin_username}} password={{mapr_password_clear|default("mapr")}} mapr_webserver={{mapr_webserver}}
+
+    - name: run RWSpeedTest, 5GB data per node
+      sudo_user: mapr
+      shell: hadoop jar /opt/mapr/lib/maprfs-diagnostic-tools-*-mapr.jar com.mapr.fs.RWSpeedTest /benchmarks/{{ansible_fqdn}}/rwspeedtest {{item}} maprfs:/// > /tmp/rwspeedtest-output
       with_items:
-        - write
-        - read
-      when: classic_enabled
+        - 5120
+        - -5120
 
-    - name: get the results files (mrv1)
-      run_once: yes
-      fetch:
-        src: /tmp/mrv1-result-{{item}}
-        dest: 'test_results/{{ansible_distribution}}/{{ansible_ec2_placement_region|default("region_unknown")}}/{{ansible_ec2_instance_type|default("type_unknown")}}/{{ansible_date_time.year}}/{{ansible_date_time.month}}/{{ansible_date_time.day}}/{{ansible_date_time.hour}}/{{ansible_date_time.minute}}'
-        fail_on_missing: true
-      with_items:
-        - read
-        - write
-      when: classic_enabled
-
-    - name: clean up TestDFSIO data
-      run_once: yes
-      environment:
-        MAPR_MAPREDUCE_MODE: classic
-      command: hadoop jar /opt/mapr/hadoop/hadoop-0.20.2/hadoop-0.20.2-dev-test.jar TestDFSIO -clean
-      when: classic_enabled
-
-    - name: check that jobtracker role exists
+    - name: check that resourcemanager role exists
       run_once: yes
       stat: path=/opt/mapr/roles/resourcemanager
       register: resourcemanager
@@ -77,36 +74,6 @@
       ec2_facts:
       register: ec2_facts
       when: ansible_distribution in ('Amazon')
-
-    - name: run TestDFSIO to write,read 5GB of data per node (MRv2)
-      run_once: yes
-      sudo_user: mapr
-      environment:
-        MAPR_MAPREDUCE_MODE: yarn
-      command: hadoop jar /opt/mapr/hadoop/hadoop-0.20.2/hadoop-0.20.2-dev-test.jar TestDFSIO -{{item}} -fileSize 1024 -nrFiles {{groups['cluster']|length * 5}} -resFile /tmp/mrv2-result-{{item}}
-      with_items:
-        - write
-        - read
-      when: yarn_enabled
-
-    - name: get the results files (YARN)
-      run_once: yes
-      fetch:
-        src: /tmp/mrv2-result-{{item}}
-        dest: 'test_results/{{ansible_distribution}}/{{ansible_ec2_placement_region|default("region_unknown")}}/{{ansible_ec2_instance_type|default("type_unknown")}}/{{ansible_date_time.year}}/{{ansible_date_time.month}}/{{ansible_date_time.day}}/{{ansible_date_time.hour}}/{{ansible_date_time.minute}}'
-        fail_on_missing: true
-      with_items:
-        - read
-        - write
-      when: yarn_enabled is defined and yarn_enabled
-
-    - name: clean up TestDFSIO data
-      sudo_user: mapr
-      run_once: yes
-      environment:
-        MAPR_MAPREDUCE_MODE: yarn
-      command: hadoop jar /opt/mapr/hadoop/hadoop-0.20.2/hadoop-0.20.2-dev-test.jar TestDFSIO -clean
-      when: yarn_enabled
 
     - name: verify the impalaserver role is present
       stat: path=/opt/mapr/roles/impalaserver
