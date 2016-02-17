@@ -38,7 +38,7 @@
 
     - name: run RWSpeedTest, 5GB data per node
       sudo_user: mapr
-      shell: hadoop jar /opt/mapr/lib/maprfs-diagnostic-tools-*-mapr.jar com.mapr.fs.RWSpeedTest /benchmarks/{{ansible_fqdn}}/rwspeedtest {{item}} maprfs:/// > /tmp/rwspeedtest-output
+      shell: hadoop jar /opt/mapr/lib/maprfs-diagnostic-tools-*.jar com.mapr.fs.RWSpeedTest /benchmarks/{{ansible_fqdn}}/rwspeedtest {{item}} maprfs:/// > /tmp/rwspeedtest-output
       with_items:
         - 5120
         - -5120
