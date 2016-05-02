@@ -1,11 +1,15 @@
 ---
 # tasks file for mapr_post_install_test
-    - name: clean up the teragen
+    - name: python-requests
+      yum: name=python-requests state=present
+      when: ansible_os_family in ('RedHat')
+
+    - name: clean up teragen
       run_once: yes
       command: hadoop fs -rm -f -r /user/teragen
       when: classic_enabled
 
-    - name: try to submit a small job (teragen - MRv1)
+    - name: teragen MRv1
       run_once: yes
       environment:
         MAPR_MAPREDUCE_MODE: classic
@@ -13,7 +17,7 @@
       register: teragen
       when: classic_enabled
 
-    - name: clean up the teragen
+    - name: clean up teragen
       run_once: yes
       command: hadoop fs -rm -f -r /user/teragen
       when: classic_enabled
@@ -34,13 +38,18 @@
 
     - name: create benchmarks volume
       run_once: yes
-      mapr_volume: name=benchmarks path=/benchmarks replication=1 minreplication=1 state=present username={{mapr_admin_username}} password={{maprlogin_pw_clear|default("mapr")}} mapr_webserver={{mapr_webserver}}
+      mapr_volume: name=benchmarks path=/benchmarks replication=1 minreplication=1 state=present username={{mapr_admin_username|default("mapr")}} password={{maprlogin_pw_clear|default("mapr")}} mapr_webserver={{mapr_webserver|default("https://localhost:8443")}}
 
-    - name: run RWSpeedTest, 5GB data per node
+    - name: RWSpeedTest write
       sudo_user: mapr
       shell: hadoop jar /opt/mapr/lib/maprfs-diagnostic-tools-*.jar com.mapr.fs.RWSpeedTest /benchmarks/{{ansible_fqdn}}/rwspeedtest {{item}} maprfs:/// > /tmp/rwspeedtest-output
       with_items:
         - 5120
+
+    - name: RWSpeedTest read
+      sudo_user: mapr
+      shell: hadoop jar /opt/mapr/lib/maprfs-diagnostic-tools-*.jar com.mapr.fs.RWSpeedTest /benchmarks/{{ansible_fqdn}}/rwspeedtest {{item}} maprfs:/// > /tmp/rwspeedtest-output
+      with_items:
         - -5120
 
     - name: check that resourcemanager role exists
@@ -49,13 +58,13 @@
       register: resourcemanager
       when: yarn_enabled
 
-    - name: clean up the teragen
+    - name: clean up teragen
       run_once: yes
       sudo_user: mapr
       command: hadoop fs -rm -f -r /user/teragen
       when: yarn_enabled
 
-    - name: try to submit a small job (teragen - MRv2)
+    - name: teragen MRv2
       run_once: yes
       sudo_user: mapr
       environment:
@@ -64,7 +73,7 @@
       register: teragen
       when: yarn_enabled
  
-    - name: clean up the teragen
+    - name: clean up teragen
       run_once: yes
       sudo_user: mapr
       command: hadoop fs -rm -f -r /user/teragen
@@ -80,23 +89,21 @@
       register: impalaserver_role
       when: impala_enabled is defined and inventory_hostname in groups["impalaserver"]
 
-    - name: run a minimal impala query on all impalad nodes (will connect locally)
+    - name: minimal impala query
       command: impala-shell --query='show tables'
       register: impala_show_tables
       changed_when: False
       failed_when: impala_show_tables.rc != 0
       when: impala_enabled is defined and inventory_hostname in groups["impalaserver"] and impalaserver_role.stat.exists
 
-    - name: try to submit a small job (default MR framework)
+    - name: teragen defaultMR
       run_once: yes
       sudo_user: mapr
       command: hadoop jar /opt/mapr/hadoop/hadoop-0.20.2/hadoop-0.20.2-dev-examples.jar teragen 100 /user/teragen
       register: teragen
-      when: (classic_enabled or yarn_enabled) and inventory_hostname in groups["edge"]
 
-    - name: clean up the teragen
+    - name: clean up teragen
       run_once: yes
       sudo_user: mapr
       command: hadoop fs -rm -f -r /user/teragen
       when: teragen.rc == 0
-      when: classic_enabled or yarn_enabled and inventory_hostname in groups["edge"]

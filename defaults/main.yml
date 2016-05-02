@@ -2,3 +2,5 @@
 # defaults file for mapr_post_install_test
 
 skip_tests: False
+classic_enabled: False
+yarn_enabled: True
