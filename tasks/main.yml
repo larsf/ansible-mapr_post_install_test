@@ -23,7 +23,8 @@
       when: classic_enabled
 
     - name: check whether /benchmarks is a volume
-      sudo_user: mapr
+      become: yes
+      become_user: mapr
       run_once: yes
       shell: hadoop mfs -lsd /benchmarks | egrep /benchmarks | egrep "^v"
       register: benchmarks_dir
@@ -32,7 +33,8 @@
 
     - name: delete benchmarks directory
       run_once: yes
-      sudo_user: mapr
+      become: yes
+      become_user: mapr
       command: hadoop fs -rm -f -r /benchmarks
       when: benchmarks_dir.stdout|length == 0
 
@@ -41,7 +43,8 @@
       mapr_volume: name=benchmarks path=/benchmarks replication=1 minreplication=1 state=present username={{mapr_admin_username|default("mapr")}} password={{maprlogin_pw_clear|default("mapr")}} mapr_webserver={{mapr_webserver|default("https://localhost:8443")}}
 
     - name: RWSpeedTest write
-      sudo_user: mapr
+      become: yes
+      become_user: mapr
       shell: hadoop jar /opt/mapr/lib/maprfs-diagnostic-tools-*.jar com.mapr.fs.RWSpeedTest /benchmarks/{{ansible_fqdn}}/rwspeedtest {{item}} maprfs:/// > /tmp/rwspeedtest-output
       with_items:
         - 5120
@@ -60,13 +63,15 @@
 
     - name: clean up teragen
       run_once: yes
-      sudo_user: mapr
+      become: yes
+      become_user: mapr
       command: hadoop fs -rm -f -r /user/teragen
       when: yarn_enabled
 
     - name: teragen MRv2
       run_once: yes
-      sudo_user: mapr
+      become: yes
+      become_user: mapr
       environment:
         MAPR_MAPREDUCE_MODE: yarn
       command: hadoop jar /opt/mapr/hadoop/hadoop-0.20.2/hadoop-0.20.2-dev-examples.jar teragen 100 /user/teragen
@@ -75,7 +80,8 @@
  
     - name: clean up teragen
       run_once: yes
-      sudo_user: mapr
+      become: yes
+      become_user: mapr
       command: hadoop fs -rm -f -r /user/teragen
       when: yarn_enabled
 
@@ -98,12 +104,14 @@
 
     - name: teragen defaultMR
       run_once: yes
-      sudo_user: mapr
+      become: yes
+      become_user: mapr
       command: hadoop jar /opt/mapr/hadoop/hadoop-0.20.2/hadoop-0.20.2-dev-examples.jar teragen 100 /user/teragen
       register: teragen
 
     - name: clean up teragen
       run_once: yes
-      sudo_user: mapr
+      become: yes
+      become_user: mapr
       command: hadoop fs -rm -f -r /user/teragen
       when: teragen.rc == 0
