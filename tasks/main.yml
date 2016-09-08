@@ -3,6 +3,7 @@
     - name: python-requests
       yum: name=python-requests state=present
       when: ansible_os_family in ('RedHat')
+      environment: '{{proxy_env}}'
 
     - name: clean up teragen
       run_once: yes
