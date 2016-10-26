@@ -117,4 +117,4 @@
       become: yes
       become_user: mapr
       command: hadoop fs -rm -f -r /user/teragen
-      when: teragen.rc == 0
+      when: yarn_enabled and teragen.rc == 0
